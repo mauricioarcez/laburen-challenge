@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { DurableObject } from "cloudflare:workers";
 import { Container } from "../infrastructure/di/container";
-import { registerTools } from "../infrastructure/mcp-tools";
+import { registerTools } from "../infrastructure/mcp";
 
 export interface Env {
     DB: D1Database;
