@@ -5,6 +5,17 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.2.0] - 2026-02-09
+
+### Cambiado
+- Migración de `server.tool()` (deprecado) a `server.registerTool()` en todas las herramientas MCP.
+- Simplificada descripción del parámetro `query` en `list_products` (el System Prompt ya contiene instrucciones detalladas).
+
+### Eliminado
+- Herramienta `get_product_details` removida (no utilizada, la info viene en `list_products`).
+
+---
+
 ## [0.1.0] - 2026-02-07
 
 ### Añadido
@@ -28,3 +39,4 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ### Cambiado
 - Actualizada dependencia `wrangler` a v4 para compatibilidad y eliminación de advertencias.
 - Habilitada flag `nodejs_compat` en `wrangler.toml` para soportar polyfills de Node.js requeridos por el SDK de MCP.
+

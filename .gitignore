@@ -31,3 +31,5 @@ bun.lockb
 
 # Cloudflare D1 local database artifacts
 .d1
+.agent/rules
+
