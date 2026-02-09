@@ -7,7 +7,8 @@
         "module": "es2022",
         "moduleResolution": "bundler",
         "types": [
-            "@cloudflare/workers-types"
+            "@cloudflare/workers-types",
+            "bun-types"
         ],
         "resolveJsonModule": true,
         "allowJs": true,
@@ -21,6 +22,7 @@
     },
     "include": [
         "src/**/*",
+        "tests/**/*",
         "worker-configuration.d.ts"
     ]
 }

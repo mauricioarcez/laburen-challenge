@@ -173,18 +173,19 @@ El sistema utiliza **SQLite FTS5 (Full-Text Search)** para permitir búsquedas s
 
 1. **Base de Datos**: 
    - Tabla virtual `products_fts` indexa `tipo_prenda`, `color`, `categoria` y `descripcion`.
-   - Ranking BM25 para ordenar resultados por relevancia.
+   - El motor MCP recibe una query cruda y la pasa al operador `MATCH` de SQLite.
 
 2. **Agente (Inteligencia)**:
-   - El LLM expande la intención del usuario a sinónimos.
-   - *Usuario:* "busco algo rojo para el gym"
-   - *Agente:* Genera query `query="gym gimnasio deportivo entrenamiento", color="Rojo"`
+   - El LLM utiliza razonamiento para expandir sinónimos y agrupar conceptos.
+   - **Protocolo Pre-búsqueda**: Si el pedido es vago ("quiero algo para el gym"), el agente pide primero color o tipo antes de consultar a la BD.
+   - *Usuario:* "pantalones negros para el gym"
+   - *Agente:* Genera `query="(pantalon OR jogging OR calza) (gym OR deportivo OR entrenamiento)"`, `color="Negro"`
 
 3. **MCP (Motor)**:
-   - Ejecuta la búsqueda FTS5: `MATCH 'gym OR gimnasio OR deportivo OR entrenamiento'`
-   - Aplica filtros duros: `WHERE color = 'Rojo'`
+   - Ejecuta la búsqueda FTS5 avanzada: `MATCH '(pantalon OR jogging OR calza) (gym OR deportivo OR entrenamiento)'`
+   - Aplica filtros adicionales (categoria, precio_max) mediante `WHERE`.
 
-Esto permite que el agente encuentre "calzas" cuando el usuario busca "pantalones", o "remeras" cuando busca "camisetas", delegando la comprensión semántica al LLM y la búsqueda rápida a la BD.
+Esto permite una precisión mucho mayor delegando la construcción de la lógica booleana al LLM, mientras la BD resuelve la velocidad por índices.
 
 ---
 

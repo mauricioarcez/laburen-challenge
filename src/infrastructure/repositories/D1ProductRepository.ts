@@ -20,14 +20,16 @@ export class D1ProductRepository implements IProductRepository {
 
         // Build FTS5 query if search terms provided
         if (filters.query && filters.query.trim()) {
-            const terms = filters.query.trim().split(/\s+/).filter(t => t.length > 0);
-            if (terms.length > 0) {
-                // Join terms with OR for FTS5 multi-term search
-                const ftsQuery = terms.join(" OR ");
-                conditions.push("fts MATCH ?");
-                params.push(ftsQuery);
-                usesFts = true;
-            }
+            const rawQuery = filters.query.trim();
+            // Basic sanitization: escape double quotes if needed, 
+            // but we trust the Agent to form valid FTS5 queries (e.g. using OR, AND/space, parens).
+            // D1/SQLite usually handles these safely as bind params, but we ensure broad matching.
+
+            // We pass the raw query directly to MATCH.
+            // Expected Agent output: "(pantalon OR jean) AND (negro OR black)"
+            conditions.push("fts MATCH ?");
+            params.push(rawQuery);
+            usesFts = true;
         }
 
         // Structured filters

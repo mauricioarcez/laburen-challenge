@@ -16,7 +16,7 @@ src/
 ├── infrastructure/      # Implementaciones concretas y herramientas
 │   ├── database/        # Configuración de base de datos (D1)
 │   ├── repositories/    # Implementación de repositorios con D1
-│   ├── mcp-tools/       # Definición de herramientas MCP
+│   ├── mcp/tools/       # Definición de herramientas MCP
 │   └── di/              # Inyección de dependencias
 ├── presentation/        # Capa de presentación (Entrada)
 │   └── server.ts        # Configuración del servidor MCP
@@ -64,11 +64,10 @@ bun run deploy
 
 Las siguientes herramientas están expuestas para que el Agente de IA pueda interactuar con el sistema:
 
-- **`list_products`**: Busca productos por nombre o descripción.
-- **`get_product_details`**: Obtiene detalles completos de un producto por ID.
-- **`create_cart`**: Inicializa un nuevo carrito de compras para la sesión.
-- **`add_to_cart`**: Agrega un producto y cantidad al carrito especificado.
-- **`view_cart`**: Muestra el contenido actual y el total del carrito.
+- **`list_products`**: Busca productos con filtros (FTS5, categoría, talla, color, precio).
+- **`create_cart`**: Crea un carrito vinculado a una conversación de Chatwoot.
+- **`update_cart`**: Agrega, modifica o elimina productos del carrito.
+- **`view_cart`**: Consulta el contenido del carrito.
 
 ## 🏗️ Arquitectura
 
