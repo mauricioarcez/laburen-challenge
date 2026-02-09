@@ -165,6 +165,29 @@ erDiagram
 
 ---
 
+## Estrategia de Búsqueda (FTS5)
+
+El sistema utiliza **SQLite FTS5 (Full-Text Search)** para permitir búsquedas semánticas básicas y eficientes sin necesidad de vector database externo.
+
+### Cómo funciona
+
+1. **Base de Datos**: 
+   - Tabla virtual `products_fts` indexa `tipo_prenda`, `color`, `categoria` y `descripcion`.
+   - Ranking BM25 para ordenar resultados por relevancia.
+
+2. **Agente (Inteligencia)**:
+   - El LLM expande la intención del usuario a sinónimos.
+   - *Usuario:* "busco algo rojo para el gym"
+   - *Agente:* Genera query `query="gym gimnasio deportivo entrenamiento", color="Rojo"`
+
+3. **MCP (Motor)**:
+   - Ejecuta la búsqueda FTS5: `MATCH 'gym OR gimnasio OR deportivo OR entrenamiento'`
+   - Aplica filtros duros: `WHERE color = 'Rojo'`
+
+Esto permite que el agente encuentre "calzas" cuando el usuario busca "pantalones", o "remeras" cuando busca "camisetas", delegando la comprensión semántica al LLM y la búsqueda rápida a la BD.
+
+---
+
 ## Template de System Prompt
 
 El agente utiliza un system prompt estructurado siguiendo practicas de prompt engineering:
@@ -231,7 +254,6 @@ Handle these situations:
 
 | Action | Estado |
 |:-------|:-------|
-| Pensamiento (Thinking) | ✅ Activo |
 | MCP Conexión | ✅ Activo |
 | Redirección a humano/operador | ✅ Activo |
 
@@ -239,10 +261,10 @@ Handle these situations:
 
 | Función | Estado | Motivo |
 |:--------|:------:|:-------|
-| Solo responder con información cargada | ✅ | Evita alucinaciones |
+| Solo responder con información cargada | ❌ | No aplica, empeora la respuesta |
 | Respuestas más claras y legibles | ❌ | Interfiere con el system prompt |
-| Responder en idioma del cliente | ❌ | Simula experiencia humana dedicada al idioma de la tienda |
-| Conversación natural en varios mensajes | ✅ | Procesamiento cada 8s, máx 5 msgs/lote, agrupación inteligente |
+| Responder en idioma del cliente | ❌[Optional] | Simula experiencia humana dedicada al idioma de la tienda |
+| Conversación natural en varios mensajes | ✅ | Procesamiento cada 5s, máx 5 msgs/lote, agrupación inteligente |
 | Evaluación de fragmentos de texto | ❌ | No necesario |
 | Acceso a datos del cliente | ✅ | Contexto para personalización |
 | Sistema de búsqueda de conocimientos (RAG) | ❌ | Usamos MCP, no RAG |
