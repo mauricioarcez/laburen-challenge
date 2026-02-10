@@ -40,10 +40,11 @@ docs/
 
 | Tool | Descripción | Parámetros clave |
 |:-----|:------------|:-----------------|
-| `list_products` | Busca productos (FTS5 + filtros) | `query?`, `categoria?`, `talla?`, `color?`, `precio_max?` |
+| `list_products` | Busca productos (FTS5 + filtros) | `query?`, `tipo_prenda?`, `categoria?`, `talla?`, `color?`, `precio_max?` |
 | `create_cart` | Crea un carrito vinculado a una conversación | `conversation_id` |
 | `add_products_to_cart` | Agrega/actualiza un producto en el carrito | `cart_id`, `product_id`, `qty` (min: 1) |
 | `delete_product_from_cart` | Elimina un producto del carrito | `cart_id`, `product_id` |
+| `request_human_handoff` | Derivar a un humano en Chatwoot (Etiquetas + Notas) | `conversation_id`, `reason`, `summary` |
 | `view_cart` | Consulta el carrito sin modificar | `cart_id` |
 
 ## 🏗️ Arquitectura
