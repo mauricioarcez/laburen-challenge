@@ -1,78 +1,70 @@
-# Laburen Asistente de Ventas - MCP Server
+# Laburen Asistente de Ventas — MCP Server
 
-Este repositorio contiene el servidor MCP (Model Context Protocol) para el desafío técnico de Laburen. Implementado en TypeScript bajo una **Arquitectura Limpia (Clean Architecture)**, diseñado para ser desplegado en Cloudflare Workers usando Bun.
+Servidor MCP (Model Context Protocol) para el asistente de ventas mayorista de Laburen. Implementado en TypeScript con **Clean Architecture**, desplegado en Cloudflare Workers.
 
 ## 📂 Estructura del Proyecto
-
-El proyecto sigue los principios de Clean Architecture para separar responsabilidades y facilitar el mantenimiento y las pruebas.
 
 ```
 src/
 ├── domain/              # Reglas de negocio y modelos puros
 │   ├── entities/        # Tipos centrales (Product, Cart)
 │   └── repositories/    # Interfaces (contratos) para acceso a datos
-├── application/         # Casos de uso de la aplicación
-│   ├── usecases/        # Lógica de negocio (e.g., CreateCart, ListProducts)
-├── infrastructure/      # Implementaciones concretas y herramientas
+├── application/         # Casos de uso
+│   └── usecases/        # ListProducts, AddToCart, RemoveFromCart, etc.
+├── infrastructure/      # Implementaciones concretas
 │   ├── database/        # Configuración de base de datos (D1)
-│   ├── repositories/    # Implementación de repositorios con D1
-│   ├── mcp/tools/       # Definición de herramientas MCP
+│   ├── repositories/    # Repositorios D1
+│   ├── mcp/tools/       # Herramientas MCP
 │   └── di/              # Inyección de dependencias
-├── presentation/        # Capa de presentación (Entrada)
+├── presentation/        # Capa de entrada
 │   └── server.ts        # Configuración del servidor MCP
 ├── db/
 │   └── schema.sql       # Esquema de base de datos D1
 └── index.ts             # Punto de entrada del Worker
+
+data/
+├── products.xlsx        # Datos fuente de productos
+└── seed.sql             # Seed SQL generado desde el Excel
+
+scripts/
+└── generate-seed.ts     # Script para regenerar seed.sql desde products.xlsx
+
+prompts/
+└── system-prompt.md     # System prompt del agente
+
+docs/
+└── agent_design.md      # Diseño del agente, diagramas y flujos
 ```
 
-## 🚀 Configuración y Uso
+## 🛠️ Herramientas MCP
 
-### Prerrequisitos
-
-- **[Bun](https://bun.sh/)** instalado (runtime y gestor de paquetes).
-- Cuenta de Cloudflare y `wrangler` autenticado.
-
-### Instalación
-
-```bash
-bun install
-```
-
-### Desarrollo Local
-
-Para iniciar el servidor en modo desarrollo (con base de datos D1 local simulada):
-
-```bash
-bun run dev
-```
-
-Si necesitas regenerar los tipos de Cloudflare:
-
-```bash
-bun run cf-typegen
-```
-
-### Despliegue
-
-Para desplegar el worker en Cloudflare:
-
-```bash
-bun run deploy
-```
-
-## 🛠️ Herramientas MCP Disponibles
-
-Las siguientes herramientas están expuestas para que el Agente de IA pueda interactuar con el sistema:
-
-- **`list_products`**: Busca productos con filtros (FTS5, categoría, talla, color, precio).
-- **`create_cart`**: Crea un carrito vinculado a una conversación de Chatwoot.
-- **`update_cart`**: Agrega, modifica o elimina productos del carrito.
-- **`view_cart`**: Consulta el contenido del carrito.
+| Tool | Descripción | Parámetros clave |
+|:-----|:------------|:-----------------|
+| `list_products` | Busca productos (FTS5 + filtros) | `query?`, `categoria?`, `talla?`, `color?`, `precio_max?` |
+| `create_cart` | Crea un carrito vinculado a una conversación | `conversation_id` |
+| `add_products_to_cart` | Agrega/actualiza un producto en el carrito | `cart_id`, `product_id`, `qty` (min: 1) |
+| `delete_product_from_cart` | Elimina un producto del carrito | `cart_id`, `product_id` |
+| `view_cart` | Consulta el carrito sin modificar | `cart_id` |
 
 ## 🏗️ Arquitectura
 
-Este proyecto utiliza:
-- **Cloudflare Workers**: Para ejecución serverless en el borde.
-- **Cloudflare D1**: Base de datos SQLite distribuida.
-- **Model Context Protocol (MCP)**: Estándar para conectar modelos de IA con datos.
-- **Clean Architecture**: Para desacoplar la lógica de negocio de la infraestructura.
+| Componente | Tecnología |
+|:-----------|:-----------|
+| Runtime | Cloudflare Workers (serverless edge) |
+| Base de Datos | Cloudflare D1 (SQLite + FTS5) |
+| Protocolo | Model Context Protocol (MCP) |
+| Arquitectura | Clean Architecture (domain → application → infrastructure) |
+| Lenguaje | TypeScript |
+| Runtime local | Bun |
+
+## 🚀 Workflows
+
+| Workflow | Descripción | Guía |
+|:---------|:------------|:-----|
+| **Desarrollo local** | Levantar el MCP Server desde cero | [`workflow/local/README.md`](workflow/local/README.md) |
+| **Deploy Cloudflare** | Desplegar el Worker en producción | [`workflow/production/README.md`](workflow/production/README.md) |
+
+## 📄 Documentación
+
+- **[Diseño del Agente](docs/agent_design.md)** — Diagramas de arquitectura, secuencia, modelo de datos y estrategia FTS5.
+- **[System Prompt](prompts/system-prompt.md)** — Prompt del agente con reglas de búsqueda y comportamiento.

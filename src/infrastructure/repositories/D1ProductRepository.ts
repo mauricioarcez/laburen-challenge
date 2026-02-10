@@ -27,7 +27,8 @@ export class D1ProductRepository implements IProductRepository {
 
             // We pass the raw query directly to MATCH.
             // Expected Agent output: "(pantalon OR jean) AND (negro OR black)"
-            conditions.push("fts MATCH ?");
+            // Use table name directly for MATCH to avoid alias issues
+            conditions.push("products_fts MATCH ?");
             params.push(rawQuery);
             usesFts = true;
         }
@@ -58,7 +59,7 @@ export class D1ProductRepository implements IProductRepository {
         const query = usesFts
             ? `
                 SELECT p.* FROM products p
-                JOIN products_fts fts ON p.rowid = fts.rowid
+                JOIN products_fts ON p.rowid = products_fts.rowid
                 ${whereClause}
                 ORDER BY bm25(products_fts)
                 LIMIT 10

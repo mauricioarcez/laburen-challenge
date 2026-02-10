@@ -34,32 +34,40 @@ export class D1CartRepository implements ICartRepository {
             UPDATE carts SET updated_at = CURRENT_TIMESTAMP WHERE id = ?
         `).bind(cartId).run();
 
-        if (qty === 0) {
-            // Remove item from cart
-            await this.db.d1.prepare(`
-                DELETE FROM cart_items WHERE cart_id = ? AND product_id = ?
-            `).bind(cartId, productId).run();
-        } else {
-            // Check if item already exists
-            // @ts-ignore: D1 types
-            const existing = await this.db.d1.prepare(`
-                SELECT id FROM cart_items WHERE cart_id = ? AND product_id = ?
-            `).bind(cartId, productId).first();
+        // Check if item already exists
+        // @ts-ignore: D1 types
+        const existing = await this.db.d1.prepare(`
+            SELECT id FROM cart_items WHERE cart_id = ? AND product_id = ?
+        `).bind(cartId, productId).first();
 
-            if (existing) {
-                // Update quantity
-                await this.db.d1.prepare(`
-                    UPDATE cart_items SET qty = ? WHERE cart_id = ? AND product_id = ?
-                `).bind(qty, cartId, productId).run();
-            } else {
-                // Insert new item
-                await this.db.d1.prepare(`
-                    INSERT INTO cart_items (cart_id, product_id, qty) VALUES (?, ?, ?)
-                `).bind(cartId, productId, qty).run();
-            }
+        if (existing) {
+            // Update quantity
+            await this.db.d1.prepare(`
+                UPDATE cart_items SET qty = ? WHERE cart_id = ? AND product_id = ?
+            `).bind(qty, cartId, productId).run();
+        } else {
+            // Insert new item
+            await this.db.d1.prepare(`
+                INSERT INTO cart_items (cart_id, product_id, qty) VALUES (?, ?, ?)
+            `).bind(cartId, productId, qty).run();
         }
 
         // Return full cart with items
+        return (await this.getCartWithItems(cartId))!;
+    }
+
+    async removeFromCart(cartId: string, productId: string): Promise<CartWithItems> {
+        // Update timestamp on cart
+        await this.db.d1.prepare(`
+            UPDATE carts SET updated_at = CURRENT_TIMESTAMP WHERE id = ?
+        `).bind(cartId).run();
+
+        // Remove item from cart
+        await this.db.d1.prepare(`
+            DELETE FROM cart_items WHERE cart_id = ? AND product_id = ?
+        `).bind(cartId, productId).run();
+
+        // Return full cart with remaining items
         return (await this.getCartWithItems(cartId))!;
     }
 

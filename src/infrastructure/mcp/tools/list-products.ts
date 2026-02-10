@@ -6,24 +6,24 @@ export function registerListProductsTool(server: McpServer, container: Container
     server.registerTool(
         "list_products",
         {
-            description: "Lista y busca productos con filtros opcionales de categoría, talla, color y precio.",
+            description: "Busca productos del catálogo mayorista. Soporta búsqueda FTS5 y filtros por categoría, talla, color y precio.",
             inputSchema: {
                 query: z.string().optional().describe(
-                    "Búsqueda FTS5. Usa OR para sinónimos: (termino1 OR termino2). Espacio combina conceptos (AND implícito). NO incluir tallas."
+                    "Búsqueda FTS5 sobre tipo_prenda, color y descripcion. Tipos de prenda siempre en SINGULAR (camisa, camiseta, pantalón, falda, sudadera, chaqueta). Usar OR para variantes: '(camisa OR camiseta)'. No incluir tallas aquí."
                 ),
                 categoria: z.enum(["Deportivo", "Casual", "Formal"]).optional().describe(
                     "Filtrar por categoría exacta."
                 ),
                 talla: z.enum(["S", "M", "L", "XL", "XXL"]).optional().describe(
-                    "Filtrar por talla. NO usar a menos que el usuario lo pida explícitamente."
+                    "Filtrar por talla. Solo si el usuario lo pide explícitamente."
                 ),
                 color: z.enum([
                     "Verde", "Blanco", "Negro", "Azul", "Rojo", "Amarillo", "Gris"
                 ]).optional().describe(
-                    "Filtrar por color EXACTO. Si el color es ambiguo (ej: 'verdoso'), usar query en su lugar."
+                    "Color exacto. Si es ambiguo (ej: 'verdoso'), no usar este filtro, incluirlo en query."
                 ),
                 precio_max: z.number().optional().describe(
-                    "Precio máximo por unidad."
+                    "Precio máximo por unidad (precio_50_u)."
                 ),
             },
         },
