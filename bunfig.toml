@@ -1,0 +1,6 @@
+[install]
+# Set the lockfile format to strictly just bun.lockb
+lockfile = { print = "yarn" }
+
+[run]
+# When running scripts, prefer `bun run` over `npm run`

@@ -1,0 +1,35 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Production
+dist
+.wrangler
+
+# Environment
+.env
+.dev.vars
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor
+.vscode
+.idea
+*.swp
+*.swo
+# Bun
+bun.lockb
+*.lockb
+
+# Cloudflare D1 local database artifacts
+.d1
+.agent/rules
+

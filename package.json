@@ -1,0 +1,23 @@
+{
+  "name": "laburen-asistente-ventas-mcp-server",
+  "version": "0.3.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "cf-typegen": "wrangler types"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241205.0",
+    "bun-types": "latest",
+    "typescript": "^5.7.2",
+    "wrangler": "^4.63.0",
+    "xlsx": "^0.18.5"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "agents": "^0.4.0",
+    "zod": "^3.24.1"
+  }
+}
