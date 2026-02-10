@@ -9,7 +9,7 @@ export class AddToCart {
 
     /**
      * Add or update a product in the cart.
-     * Use qty=0 to remove the product from the cart.
+     * qty must be >= 1. For removal, use RemoveFromCart.
      * Returns the full cart with all items.
      */
     async execute(cartId: string, productId: string, qty: number): Promise<CartWithItems> {

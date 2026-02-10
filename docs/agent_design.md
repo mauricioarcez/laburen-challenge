@@ -34,13 +34,21 @@ flowchart LR
 
 | Tool MCP | Descripción | Parámetros | Requerido |
 |:---------|:------------|:-----------|:---------:|
-| `list_products` | Buscar productos con todos sus detalles | `query?`, `categoria?`, `precio_max?` | ✅ |
+| `list_products` | Buscar productos con FTS5 y filtros | `query?`, `tipo_prenda?`, `categoria?`, `talla?`, `color?`, `precio_max?` | ✅ |
 | `create_cart` | Crear carrito vinculado a la conversación | `conversation_id` | ✅ |
-| `update_cart` | Agregar/modificar items del carrito | `cart_id`, `product_id`, `qty` | ✅ |
+| `add_products_to_cart` | Agregar o actualizar productos en el carrito | `cart_id`, `product_id`, `qty` (min: 1) | ✅ |
+| `delete_product_from_cart` | Eliminar un producto del carrito | `cart_id`, `product_id` | ✅ |
 | `view_cart` | Consultar carrito sin modificar | `cart_id` | ⭐ Extra |
-.
 
-> ⚠️ Tanto `create_cart` como `update_cart` devuelven el estado completo del carrito en la respuesta, por lo que `view_cart` solo es necesario si se quiere consultar sin modificar.
+> ⚠️ `add_products_to_cart`, `delete_product_from_cart` y `create_cart` devuelven el estado completo del carrito en la respuesta, por lo que `view_cart` solo es necesario si se quiere consultar sin modificar.
+
+### Endpoint de Producción (Cloudflare)
+
+```
+https://laburen-asistente-ventas-mcp-server.mauricioarcez23.workers.dev/sse
+```
+
+> **Auth:** Requiere header `Authorization: Bearer <tu-token>`
 
 ---
 
@@ -88,24 +96,49 @@ sequenceDiagram
     A->>A: Detecta intención de compra
     
     alt No existe carrito
-        A->>M: create_cart()
+        A->>M: create_cart(conversation_id)
         M->>DB: INSERT INTO carts
         DB-->>M: cart_id
         M-->>A: cart_id
     end
     
-    A->>M: add_to_cart(cart_id, product_id, qty)
-    M->>DB: INSERT INTO cart_items
+    A->>M: add_products_to_cart(cart_id, product_id, qty)
+    M->>DB: INSERT/UPDATE cart_items
     DB-->>M: OK
-    M-->>A: Confirmación
+    M-->>A: Carrito actualizado
     
-    A->>C: Agregar etiqueta "producto:camiseta-negra-s"
     A-->>C: "Listo, te lo sumo al pedido..."
     C-->>W: Respuesta
     W-->>U: Confirmación
 ```
 
-### 3. Derivación a Humano
+### 3. Eliminar Producto del Pedido
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant W as WhatsApp
+    participant C as Chatwoot
+    participant A as Agente Laburen
+    participant M as MCP Server
+    participant DB as Database
+
+    U->>W: "Sacame la camiseta del pedido"
+    W->>C: Mensaje via Meta API
+    C->>A: Webhook con mensaje
+    A->>A: Detecta intención de eliminar
+    
+    A->>M: delete_product_from_cart(cart_id, product_id)
+    M->>DB: DELETE FROM cart_items
+    DB-->>M: OK
+    M-->>A: Carrito actualizado
+    
+    A-->>C: "Listo, te lo saqué del pedido."
+    C-->>W: Respuesta
+    W-->>U: Confirmación
+```
+
+### 4. Derivación a Humano
 
 ```mermaid
 sequenceDiagram
@@ -148,12 +181,13 @@ erDiagram
     
     carts {
         string id PK
+        string conversation_id UK
         timestamp created_at
         timestamp updated_at
     }
     
     cart_items {
-        string id PK
+        int id PK
         string cart_id FK
         string product_id FK
         int qty
@@ -167,25 +201,40 @@ erDiagram
 
 ## Estrategia de Búsqueda (FTS5)
 
-El sistema utiliza **SQLite FTS5 (Full-Text Search)** para permitir búsquedas semánticas básicas y eficientes sin necesidad de vector database externo.
+El sistema utiliza **SQLite FTS5 (Full-Text Search)** para búsquedas eficientes sin necesidad de vector database.
 
-### Cómo funciona
+### Columnas indexadas
 
-1. **Base de Datos**: 
-   - Tabla virtual `products_fts` indexa `tipo_prenda`, `color`, `categoria` y `descripcion`.
-   - El motor MCP recibe una query cruda y la pasa al operador `MATCH` de SQLite.
+La tabla virtual `products_fts` indexa **4 columnas**:
 
-2. **Agente (Inteligencia)**:
-   - El LLM utiliza razonamiento para expandir sinónimos y agrupar conceptos.
-   - **Protocolo Pre-búsqueda**: Si el pedido es vago ("quiero algo para el gym"), el agente pide primero color o tipo antes de consultar a la BD.
-   - *Usuario:* "pantalones negros para el gym"
-   - *Agente:* Genera `query="(pantalon OR jogging OR calza) (gym OR deportivo OR entrenamiento)"`, `color="Negro"`
+| Columna | Ejemplo de valores | Uso en query |
+|:--------|:-------------------|:-------------|
+| `tipo_prenda` | Camisa, Camiseta, Pantalón | `camisa`, `(pantalon OR jogging OR calza)` |
+| `color` | Verde, Azul, Negro | `(verde OR "verde agua")` |
+| `categoria` | Deportivo, Casual, Formal | `deportivo` |
+| `descripcion` | "Ideal para uso diario" | `(diario OR casual)` |
 
-3. **MCP (Motor)**:
-   - Ejecuta la búsqueda FTS5 avanzada: `MATCH '(pantalon OR jogging OR calza) (gym OR deportivo OR entrenamiento)'`
-   - Aplica filtros adicionales (categoria, precio_max) mediante `WHERE`.
+### Extensibilidad (Nuevos productos sin cambios de código)
 
-Esto permite una precisión mucho mayor delegando la construcción de la lógica booleana al LLM, mientras la BD resuelve la velocidad por índices.
+El diseño FTS5 permite **agregar nuevos tipos de prenda o colores a la DB** sin tocar el servidor MCP ni el Agente.
+
+- **Filtros Exactos (`tipo_prenda`, `color`)**: Úsalos solo para los valores estándar (Pantalón, Verde, etc.).
+- **Nuevos Valores (`query`)**: Si mañana agregas "Bermuda" o "Turquesa" a la DB, el agente los encontrará inmediatamente usando `query`.
+
+**Ejemplo:**
+*Usuario:* "Tenés bermudas turquesa?" (No existen en el Enum actual)
+*Agente:* `list_products({ query: "(bermuda) AND (turquesa)" })`
+*Resultado:* ✅ Encuentra el producto nuevo al instante.
+
+### Estrategia de Búsqueda
+
+1. **Agente Recolecta Contexto B2B** (Público, tipo de negocio).
+2. **Decisión de Búsqueda**:
+  - ¿Está en el Enum estándar? -> Usa `tipo_prenda="Pantalón"`.
+  - ¿Es nuevo o raro? -> Usa `query="bermuda"`.
+3. **MCP Ejecuta**: Combina `WHERE` exacto + `MATCH` flexible.
+
+> **Nota**: Los tipos de prenda en la DB están en **singular** (camisa, camiseta, pantalón, etc.). La tool lo documenta explícitamente para que el agente construya las queries correctamente.
 
 ---
 
@@ -225,13 +274,15 @@ Handle these situations:
 
 | Sección | Contenido |
 |:--------|:----------|
-| **Role** | Argentinian virtual sales advisor |
-| **Domain** | Helping people find products and build purchases through conversation |
-| **Core Responsibilities** | Entender necesidad real, presentar opciones claras, guiar hacia el pedido |
-| **Analysis Process** | Identificar intención → Preguntar mínimo necesario → Presentar opciones → Armar pedido |
+| **Role** | Vendedor de indumentaria mayorista |
+| **Domain** | Cerrar pedidos mayoristas con tono informal y cercano |
+| **Core Responsibilities** | Entender necesidad, presentar opciones rentables, guiar hacia el pedido ("bulto cerrado") |
+| **Analysis Process** | Identificar intención → Sugerir populares si es vago (Gym->Deportivo) → Presentar opciones → Armar pedido |
 | **Quality Standards** | Tono humano argentino, voseo, respuestas cortas, beneficios > specs, sin presión |
-| **Output Format** | Lista conversacional de productos + pregunta de cierre suave |
-| **Edge Cases** | Off-topic (responder breve), usuario indeciso (preguntas guía), sin stock (alternativa), frustrado (calmar) |
+| **Output Format** | Lista conversacional de productos ("Mirá lo que te separé") + pregunta de cierre suave |
+| **Edge Cases** | Off-topic (responder breve), usuario indeciso (sugerir populares), sin stock (alternativa), frustrado (calmar) |
+| **Domain Knowledge** | Contexto mayorista, tipos/talles/colores válidos, mapeo de términos (buzo->sudadera) |
+| **Search Strategy** | Mapeo de términos obligatorio, Gym=Deportivo, manejo de colores ambiguos en query |
 
 > 📄 Ver implementación completa en [`prompts/system-prompt.md`](../prompts/system-prompt.md)
 
@@ -241,7 +292,7 @@ Handle these situations:
 
 | Regla | Descripción |
 |:------|:------------|
-| **Lenguaje** | Argentino, voseo moderado, nunca menciona "carrito" |
+| **Lenguaje** | Argentino ESTRICTO (Buzo, Campera, Remera, Talle). NUNCA "Sudadera" o "Filtrar". |
 | **Límite de opciones** | Máximo 3 productos por búsqueda |
 | **Sin datos inventados** | Todo debe venir del MCP |
 | **Off-topic** | Responde brevemente sin romper el rol |
@@ -283,4 +334,4 @@ Handle these situations:
 | CRM | Chatwoot |
 | Agente | Laburen Dashboard |
 | MCP Server | Cloudflare Workers (TypeScript) + Durable Objects |
-| Base de Datos | Cloudflare D1 (SQLite) |
+| Base de Datos | Cloudflare D1 (SQLite + FTS5) |

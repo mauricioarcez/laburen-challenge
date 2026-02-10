@@ -12,6 +12,7 @@ export interface ProductFilters {
      */
     query?: string;
     categoria?: string;
+    tipo_prenda?: string;
     talla?: string;
     color?: string;
     precio_max?: number;

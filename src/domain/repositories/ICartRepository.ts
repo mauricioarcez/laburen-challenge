@@ -9,10 +9,16 @@ export interface ICartRepository {
 
     /**
      * Add or update a product in the cart.
-     * If qty is 0, removes the item.
+     * qty must be >= 1.
      * Returns the full cart with all items.
      */
     addToCart(cartId: string, productId: string, qty: number): Promise<CartWithItems>;
+
+    /**
+     * Remove a product from the cart entirely.
+     * Returns the full cart with remaining items.
+     */
+    removeFromCart(cartId: string, productId: string): Promise<CartWithItems>;
 
     /**
      * Get cart with all items and product details.

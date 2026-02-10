@@ -5,14 +5,14 @@ compatibility_flags = ["nodejs_compat"]
 
 [durable_objects]
 bindings = [
-  { name = "MCP_SERVER", class_name = "LaburenMCP" }
+  { name = "MCP", class_name = "LaburenMCP" }
 ]
 
 [[migrations]]
 tag = "v1"
-new_classes = ["LaburenMCP"]
+new_sqlite_classes = ["LaburenMCP"]
 
 [[d1_databases]]
 binding = "DB"
 database_name = "laburen-db"
-database_id = "to-be-replaced-with-real-id"
+database_id = "a5e9302b-7d02-48de-a817-2ce86b422663"

@@ -27,7 +27,8 @@ export class D1ProductRepository implements IProductRepository {
 
             // We pass the raw query directly to MATCH.
             // Expected Agent output: "(pantalon OR jean) AND (negro OR black)"
-            conditions.push("fts MATCH ?");
+            // Use table name directly for MATCH to avoid alias issues
+            conditions.push("products_fts MATCH ?");
             params.push(rawQuery);
             usesFts = true;
         }
@@ -36,6 +37,10 @@ export class D1ProductRepository implements IProductRepository {
         if (filters.categoria) {
             conditions.push("p.categoria = ?");
             params.push(filters.categoria);
+        }
+        if (filters.tipo_prenda) {
+            conditions.push("p.tipo_prenda = ?");
+            params.push(filters.tipo_prenda);
         }
         if (filters.talla) {
             conditions.push("p.talla = ?");
@@ -55,10 +60,10 @@ export class D1ProductRepository implements IProductRepository {
             : "";
 
         // Use FTS5 join and BM25 ranking when searching, otherwise simple query
-        const query = usesFts
+        const queryStr = usesFts
             ? `
                 SELECT p.* FROM products p
-                JOIN products_fts fts ON p.rowid = fts.rowid
+                JOIN products_fts ON p.rowid = products_fts.rowid
                 ${whereClause}
                 ORDER BY bm25(products_fts)
                 LIMIT 10
@@ -69,11 +74,18 @@ export class D1ProductRepository implements IProductRepository {
                 LIMIT 10
             `;
 
-        const stmt = this.db.d1.prepare(query);
+        console.log("--- D1ProductRepository Search Debug ---");
+        console.log("Filters:", JSON.stringify(filters));
+        console.log("SQL Query:", queryStr);
+        console.log("Params:", JSON.stringify(params));
+        console.log("----------------------------------------");
+
+        const stmt = this.db.d1.prepare(queryStr);
         const boundStmt = params.length > 0 ? stmt.bind(...params) : stmt;
 
         // @ts-ignore: D1 types
         const { results } = await boundStmt.all();
+        console.log(`Found ${results.length} products.`);
         return results as unknown as Product[];
     }
 

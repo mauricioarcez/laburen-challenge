@@ -6,30 +6,37 @@ export function registerListProductsTool(server: McpServer, container: Container
     server.registerTool(
         "list_products",
         {
-            description: "Lista y busca productos con filtros opcionales de categoría, talla, color y precio.",
+            description: "Busca productos del catálogo mayorista. Soporta búsqueda FTS5 y filtros por categoría, talla, color y precio.",
             inputSchema: {
                 query: z.string().optional().describe(
-                    "Búsqueda FTS5. Usa OR para sinónimos: (termino1 OR termino2). Espacio combina conceptos (AND implícito). NO incluir tallas."
+                    "Búsqueda flexible FTS5. Se usa para buscar términos que no están en los filtros ENUM (ej: nuevos tipos de prendas, colores nuevos o raros). Usar OR para variantes: '(sudadera OR buzo)'. Si el usuario pide un tipo de prenda o color que NO está en la lista de valores permitidos, ÚSALO AQUÍ. EN SINGULAR"
+                ),
+                tipo_prenda: z.enum(["Pantalón", "Camiseta", "Falda", "Sudadera", "Chaqueta", "Camisa"]).optional().describe(
+                    "Filtrar por tipo de prenda Singular. Solo usar si coincide con uno de estos valores (ej Pantalon == Pantalones/Joggings/Cargo) Si se pide otro tipo usarlo en Query (ej: Pantalon OR Jogging)."
                 ),
                 categoria: z.enum(["Deportivo", "Casual", "Formal"]).optional().describe(
-                    "Filtrar por categoría exacta."
+                    "Filtrar por categoría exacta (Gym=Deportivo)."
                 ),
                 talla: z.enum(["S", "M", "L", "XL", "XXL"]).optional().describe(
-                    "Filtrar por talla. NO usar a menos que el usuario lo pida explícitamente."
+                    "Filtrar por talle. Solo si el usuario lo pide explícitamente (ej: 'necesito en talle L')."
                 ),
                 color: z.enum([
                     "Verde", "Blanco", "Negro", "Azul", "Rojo", "Amarillo", "Gris"
                 ]).optional().describe(
-                    "Filtrar por color EXACTO. Si el color es ambiguo (ej: 'verdoso'), usar query en su lugar."
+                    "Color exacto. Si el usuario dice 'verdoso' o 'clarito', NO usar este filtro, ponerlo en 'query'."
                 ),
                 precio_max: z.number().optional().describe(
-                    "Precio máximo por unidad."
+                    "Precio máximo por unidad (precio_50_u)."
                 ),
             },
         },
-        async ({ query, categoria, talla, color, precio_max }) => {
+        async ({ query, tipo_prenda, categoria, talla, color, precio_max }) => {
+            console.log("--- MCP TOOL: list_products ---");
+            console.log("Arguments received:", JSON.stringify({ query, tipo_prenda, categoria, talla, color, precio_max }));
+
             const products = await container.listProducts.execute({
                 query,
+                tipo_prenda,
                 categoria,
                 talla,
                 color,
