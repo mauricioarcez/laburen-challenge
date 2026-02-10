@@ -34,7 +34,7 @@ flowchart LR
 
 | Tool MCP | Descripción | Parámetros | Requerido |
 |:---------|:------------|:-----------|:---------:|
-| `list_products` | Buscar productos con FTS5 y filtros | `query?`, `categoria?`, `talla?`, `color?`, `precio_max?` | ✅ |
+| `list_products` | Buscar productos con FTS5 y filtros | `query?`, `tipo_prenda?`, `categoria?`, `talla?`, `color?`, `precio_max?` | ✅ |
 | `create_cart` | Crear carrito vinculado a la conversación | `conversation_id` | ✅ |
 | `add_products_to_cart` | Agregar o actualizar productos en el carrito | `cart_id`, `product_id`, `qty` (min: 1) | ✅ |
 | `delete_product_from_cart` | Eliminar un producto del carrito | `cart_id`, `product_id` | ✅ |
@@ -209,32 +209,30 @@ La tabla virtual `products_fts` indexa **4 columnas**:
 
 | Columna | Ejemplo de valores | Uso en query |
 |:--------|:-------------------|:-------------|
-| `tipo_prenda` | Camisa, Camiseta, Pantalón | `camisa`, `(camisa OR camiseta)` |
+| `tipo_prenda` | Camisa, Camiseta, Pantalón | `camisa`, `(pantalon OR jogging OR calza)` |
 | `color` | Verde, Azul, Negro | `(verde OR "verde agua")` |
 | `categoria` | Deportivo, Casual, Formal | `deportivo` |
 | `descripcion` | "Ideal para uso diario" | `(diario OR casual)` |
 
-### Extensibilidad
+### Extensibilidad (Nuevos productos sin cambios de código)
 
-El FTS5 busca sobre **todas las columnas indexadas**, no solo `tipo_prenda`. Esto significa que:
+El diseño FTS5 permite **agregar nuevos tipos de prenda o colores a la DB** sin tocar el servidor MCP ni el Agente.
 
-- **Nuevos colores**: Si se agrega un producto con color "Verde Agua", el agente puede encontrarlo con `query="(verde OR \"verde agua\")"` sin cambiar código.
-- **Nuevas categorías**: Si se agrega una categoría "Urbano", el agente puede buscar `query="urbano"` inmediatamente.
-- **Nuevas descripciones**: Cualquier texto en `descripcion` es buscable al instante.
+- **Filtros Exactos (`tipo_prenda`, `color`)**: Úsalos solo para los valores estándar (Pantalón, Verde, etc.).
+- **Nuevos Valores (`query`)**: Si mañana agregas "Bermuda" o "Turquesa" a la DB, el agente los encontrará inmediatamente usando `query`.
 
-Los filtros enum (`color`, `categoria`, `talla`) son **atajos de conveniencia** para valores conocidos. El FTS5 es el **fallback universal** para cualquier valor que no esté en los enums hardcodeados.
+**Ejemplo:**
+*Usuario:* "Tenés bermudas turquesa?" (No existen en el Enum actual)
+*Agente:* `list_products({ query: "(bermuda) AND (turquesa)" })`
+*Resultado:* ✅ Encuentra el producto nuevo al instante.
 
-### Flujo de búsqueda
+### Estrategia de Búsqueda
 
-1. **Agente (Inteligencia)**:
-   - Expande sinónimos y agrupa conceptos usando sintaxis FTS5.
-   - **Protocolo Pre-búsqueda**: Si el pedido es vago, pide contexto antes de consultar.
-   - *Usuario:* "pantalones negros para el gym"
-   - *Agente:* `query="(pantalón OR jogging OR calza)"`, `categoria="Deportivo"`, `color="Negro"`
-
-2. **MCP (Motor)**:
-   - Ejecuta `MATCH '(pantalón OR jogging OR calza)'` en FTS5.
-   - Aplica filtros adicionales (`categoria`, `color`, `precio_max`) mediante `WHERE`.
+1. **Agente Recolecta Contexto B2B** (Público, tipo de negocio).
+2. **Decisión de Búsqueda**:
+  - ¿Está en el Enum estándar? -> Usa `tipo_prenda="Pantalón"`.
+  - ¿Es nuevo o raro? -> Usa `query="bermuda"`.
+3. **MCP Ejecuta**: Combina `WHERE` exacto + `MATCH` flexible.
 
 > **Nota**: Los tipos de prenda en la DB están en **singular** (camisa, camiseta, pantalón, etc.). La tool lo documenta explícitamente para que el agente construya las queries correctamente.
 

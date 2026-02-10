@@ -8,6 +8,8 @@ export interface Env {
     DB: D1Database;
     MCP: DurableObjectNamespace<LaburenMCP>;
     MCP_AUTH_TOKEN?: string;
+    CHATWOOT_API_URL?: string;
+    CHATWOOT_API_TOKEN?: string;
 }
 
 interface Transport {
@@ -45,7 +47,13 @@ export class LaburenMCP extends DurableObject {
             db = { prepare: () => mockStmt } as any;
         }
 
-        this.container = new Container({ d1: db });
+        this.container = new Container(
+            { d1: db },
+            {
+                apiUrl: env.CHATWOOT_API_URL,
+                apiToken: env.CHATWOOT_API_TOKEN
+            }
+        );
     }
 
     // Helper to create a fresh McpServer instance for a new connection

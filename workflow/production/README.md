@@ -47,17 +47,27 @@ Resultado esperado: `100`.
 
 ### 5. Configurar Auth (Seguridad)
 
-Generar un token seguro y guardarlo como secreto en Cloudflare:
+### 6. Configurar Secretos (Auth y Chatwoot)
+
+Para que el servidor funcione correctamente y pueda derivar a humanos, necesitas configurar los siguientes secretos:
 
 ```bash
+# 1. Token de Autenticación del MCP (para proteger tu API)
 bun wrangler secret put MCP_AUTH_TOKEN
-# Te pedirá que ingreses el token. Ej: laburen-secret-123
+# Ingresa tu token seguro (ej: laburen-secret-123)
+
+# 2. URL de Chatwoot (para derivación humana)
+bun wrangler secret put CHATWOOT_API_URL
+# Ingresa la URL base (ej: https://chatwootchallenge.laburen.com)
+
+# 3. Token de API de Chatwoot (para derivación humana)
+bun wrangler secret put CHATWOOT_API_TOKEN
+# Ingresa el Token de Acceso Personal de un usuario Agente/Admin
 ```
 
+> ⚠️ Si no configuras `MCP_AUTH_TOKEN`, el servidor será público. Si no configuras los de `CHATWOOT`, la tool `request_human_handoff` fallará.
 
-> ⚠️ Si no configurás este secreto, el servidor será público.
-
-### 6. Deploy del Worker
+### 7. Deploy del Worker
 
 ```bash
 bun run deploy

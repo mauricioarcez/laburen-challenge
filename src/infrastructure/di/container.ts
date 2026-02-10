@@ -16,9 +16,13 @@ export class Container {
     public readonly removeFromCart: RemoveFromCart;
     public readonly viewCart: ViewCart;
 
-    constructor(db: IDatabase) {
+    public readonly chatwootConfig: { apiUrl?: string; apiToken?: string };
+
+    constructor(db: IDatabase, chatwootConfig: { apiUrl?: string; apiToken?: string } = {}) {
         const productRepository = new D1ProductRepository(db);
         const cartRepository = new D1CartRepository(db);
+
+        this.chatwootConfig = chatwootConfig;
 
         this.listProducts = new ListProducts(productRepository);
         this.getProductDetails = new GetProductDetails(productRepository);

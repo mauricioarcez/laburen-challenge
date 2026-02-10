@@ -42,6 +42,8 @@ Para probar autenticación localmente, crear un archivo `.dev.vars`:
 
 ```text
 MCP_AUTH_TOKEN=token-local-123
+CHATWOOT_API_URL=https://chatwootchallenge.laburen.com
+CHATWOOT_API_TOKEN=tu-token-de-chatwoot-real (o mock para test)
 ```
 
 Luego iniciar:

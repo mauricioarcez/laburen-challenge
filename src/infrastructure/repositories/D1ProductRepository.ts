@@ -38,6 +38,10 @@ export class D1ProductRepository implements IProductRepository {
             conditions.push("p.categoria = ?");
             params.push(filters.categoria);
         }
+        if (filters.tipo_prenda) {
+            conditions.push("p.tipo_prenda = ?");
+            params.push(filters.tipo_prenda);
+        }
         if (filters.talla) {
             conditions.push("p.talla = ?");
             params.push(filters.talla);

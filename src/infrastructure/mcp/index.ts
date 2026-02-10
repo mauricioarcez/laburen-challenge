@@ -5,6 +5,7 @@ import { registerCreateCartTool } from "./tools/create-cart";
 import { registerAddProductsToCartTool } from "./tools/add-products-to-cart";
 import { registerDeleteProductFromCartTool } from "./tools/delete-product-from-cart";
 import { registerViewCartTool } from "./tools/view-cart";
+import { registerHumanHandoffTool } from "./tools/human-handoff";
 
 /**
  * Register all MCP tools with the server by importing them from the tools directory.
@@ -15,4 +16,5 @@ export function registerTools(server: McpServer, container: Container): void {
     registerAddProductsToCartTool(server, container);
     registerDeleteProductFromCartTool(server, container);
     registerViewCartTool(server, container);
+    registerHumanHandoffTool(server, container);
 }

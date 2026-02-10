@@ -9,7 +9,10 @@ export function registerListProductsTool(server: McpServer, container: Container
             description: "Busca productos del catálogo mayorista. Soporta búsqueda FTS5 y filtros por categoría, talla, color y precio.",
             inputSchema: {
                 query: z.string().optional().describe(
-                    "Búsqueda FTS5. Mapear términos argentinos a DB: 'buzo'->sudadera, 'campera'->chaqueta, 'remera'->camiseta. Usar OR para variantes: '(sudadera OR buzo)'. Tipos en SINGULAR."
+                    "Búsqueda flexible FTS5. Se usa para buscar términos que no están en los filtros ENUM (ej: nuevos tipos de prendas, colores nuevos o raros). Usar OR para variantes: '(sudadera OR buzo)'. Si el usuario pide un tipo de prenda o color que NO está en la lista de valores permitidos, ÚSALO AQUÍ. EN SINGULAR"
+                ),
+                tipo_prenda: z.enum(["Pantalón", "Camiseta", "Falda", "Sudadera", "Chaqueta", "Camisa"]).optional().describe(
+                    "Filtrar por tipo de prenda Singular. Solo usar si coincide con uno de estos valores (ej Pantalon == Pantalones/Joggings/Cargo) Si se pide otro tipo usarlo en Query (ej: Pantalon OR Jogging)."
                 ),
                 categoria: z.enum(["Deportivo", "Casual", "Formal"]).optional().describe(
                     "Filtrar por categoría exacta (Gym=Deportivo)."
@@ -27,9 +30,13 @@ export function registerListProductsTool(server: McpServer, container: Container
                 ),
             },
         },
-        async ({ query, categoria, talla, color, precio_max }) => {
+        async ({ query, tipo_prenda, categoria, talla, color, precio_max }) => {
+            console.log("--- MCP TOOL: list_products ---");
+            console.log("Arguments received:", JSON.stringify({ query, tipo_prenda, categoria, talla, color, precio_max }));
+
             const products = await container.listProducts.execute({
                 query,
+                tipo_prenda,
                 categoria,
                 talla,
                 color,
