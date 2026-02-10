@@ -7,6 +7,7 @@ import { registerTools } from "./infrastructure/mcp";
 export interface Env {
     DB: D1Database;
     MCP: DurableObjectNamespace<LaburenMCP>;
+    MCP_AUTH_TOKEN?: string;
 }
 
 interface Transport {
@@ -185,6 +186,23 @@ export default {
                     "Access-Control-Allow-Headers": "*"
                 }
             });
+        }
+
+        // Authentication (Bearer Token)
+        // Only enforced if MCP_AUTH_TOKEN is configured in environment/secrets
+        if (env.MCP_AUTH_TOKEN) {
+            const authHeader = request.headers.get("Authorization");
+
+            if (!authHeader || !authHeader.startsWith("Bearer ")) {
+                return new Response("Unauthorized: Missing Bearer token", { status: 401 });
+            }
+
+            const token = authHeader.split(" ")[1];
+
+            // Constant-time comparison desirable normally, but string match is fine here for now
+            if (token !== env.MCP_AUTH_TOKEN) {
+                return new Response("Unauthorized: Invalid token", { status: 401 });
+            }
         }
 
         // Delegate to Durable Object

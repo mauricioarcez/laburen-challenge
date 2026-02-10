@@ -9,18 +9,18 @@ export function registerListProductsTool(server: McpServer, container: Container
             description: "Busca productos del catálogo mayorista. Soporta búsqueda FTS5 y filtros por categoría, talla, color y precio.",
             inputSchema: {
                 query: z.string().optional().describe(
-                    "Búsqueda FTS5 sobre tipo_prenda, color y descripcion. Tipos de prenda siempre en SINGULAR (camisa, camiseta, pantalón, falda, sudadera, chaqueta). Usar OR para variantes: '(camisa OR camiseta)'. No incluir tallas aquí."
+                    "Búsqueda FTS5. Mapear términos argentinos a DB: 'buzo'->sudadera, 'campera'->chaqueta, 'remera'->camiseta. Usar OR para variantes: '(sudadera OR buzo)'. Tipos en SINGULAR."
                 ),
                 categoria: z.enum(["Deportivo", "Casual", "Formal"]).optional().describe(
-                    "Filtrar por categoría exacta."
+                    "Filtrar por categoría exacta (Gym=Deportivo)."
                 ),
                 talla: z.enum(["S", "M", "L", "XL", "XXL"]).optional().describe(
-                    "Filtrar por talla. Solo si el usuario lo pide explícitamente."
+                    "Filtrar por talle. Solo si el usuario lo pide explícitamente (ej: 'necesito en talle L')."
                 ),
                 color: z.enum([
                     "Verde", "Blanco", "Negro", "Azul", "Rojo", "Amarillo", "Gris"
                 ]).optional().describe(
-                    "Color exacto. Si es ambiguo (ej: 'verdoso'), no usar este filtro, incluirlo en query."
+                    "Color exacto. Si el usuario dice 'verdoso' o 'clarito', NO usar este filtro, ponerlo en 'query'."
                 ),
                 precio_max: z.number().optional().describe(
                     "Precio máximo por unidad (precio_50_u)."

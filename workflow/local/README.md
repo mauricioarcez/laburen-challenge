@@ -38,13 +38,29 @@ Resultado esperado: `100`.
 
 ### 5. Iniciar el servidor
 
+Para probar autenticación localmente, crear un archivo `.dev.vars`:
+
+```text
+MCP_AUTH_TOKEN=token-local-123
+```
+
+Luego iniciar:
+
 ```bash
 bun run dev
 ```
 
-El MCP Server se levanta en `http://localhost:8787` o `http://localhost:8788`.
+El MCP Server se levanta en `http://localhost:8787` (o `8788`).
 
 ### 6. Probar con MCP Inspector
+
+```bash
+# Setear env var para el inspector (si soporta headers) o usar el token en la URL si el inspector lo permite.
+# Nota: La tool mcp-inspector actual puede no soportar headers custom fácilmente.
+# Si el token está activado, el inspector podría fallar con 401.
+# Para desarrollo con Inspector, podés comentar el check de auth temporalmente o no poner .dev.vars
+bunx @modelcontextprotocol/inspector@latest
+```
 
 En otra terminal:
 

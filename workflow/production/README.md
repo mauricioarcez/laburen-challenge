@@ -45,13 +45,36 @@ bun wrangler d1 execute laburen-db --remote --command "SELECT COUNT(*) FROM prod
 
 Resultado esperado: `100`.
 
-### 5. Deploy del Worker
+### 5. Configurar Auth (Seguridad)
+
+Generar un token seguro y guardarlo como secreto en Cloudflare:
+
+```bash
+bun wrangler secret put MCP_AUTH_TOKEN
+# Te pedirá que ingreses el token. Ej: laburen-secret-123
+```
+
+
+> ⚠️ Si no configurás este secreto, el servidor será público.
+
+### 6. Deploy del Worker
 
 ```bash
 bun run deploy
 ```
 
 El Worker queda disponible en la URL que devuelve Wrangler (ej: `https://laburen-asistente-ventas-mcp-server.<tu-subdomain>.workers.dev`).
+
+---
+
+## Conexión desde Laburen
+
+| Config | Valor |
+|:-------|:------|
+| **MCP URL** | `https://tu-worker-url/sse` |
+| **Auth Header** | `Bearer <tu-token>` |
+
+---
 
 ---
 

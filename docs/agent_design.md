@@ -42,6 +42,14 @@ flowchart LR
 
 > ⚠️ `add_products_to_cart`, `delete_product_from_cart` y `create_cart` devuelven el estado completo del carrito en la respuesta, por lo que `view_cart` solo es necesario si se quiere consultar sin modificar.
 
+### Endpoint de Producción (Cloudflare)
+
+```
+https://laburen-asistente-ventas-mcp-server.mauricioarcez23.workers.dev/sse
+```
+
+> **Auth:** Requiere header `Authorization: Bearer <tu-token>`
+
 ---
 
 ## Diagramas de secuencia según caso de uso
@@ -268,15 +276,15 @@ Handle these situations:
 
 | Sección | Contenido |
 |:--------|:----------|
-| **Role** | Argentinian virtual sales advisor |
-| **Domain** | Helping people find products and build purchases through conversation |
-| **Core Responsibilities** | Entender necesidad real, presentar opciones claras, guiar hacia el pedido |
-| **Analysis Process** | Identificar intención → Preguntar mínimo necesario → Presentar opciones → Armar pedido |
+| **Role** | Vendedor de indumentaria mayorista |
+| **Domain** | Cerrar pedidos mayoristas con tono informal y cercano |
+| **Core Responsibilities** | Entender necesidad, presentar opciones rentables, guiar hacia el pedido ("bulto cerrado") |
+| **Analysis Process** | Identificar intención → Sugerir populares si es vago (Gym->Deportivo) → Presentar opciones → Armar pedido |
 | **Quality Standards** | Tono humano argentino, voseo, respuestas cortas, beneficios > specs, sin presión |
-| **Output Format** | Lista conversacional de productos + pregunta de cierre suave |
-| **Edge Cases** | Off-topic (responder breve), usuario indeciso (preguntas guía), sin stock (alternativa), frustrado (calmar) |
-| **Domain Knowledge** | Contexto mayorista, tipos/tallas/colores/categorías válidas |
-| **Search Strategy** | Reglas de construcción FTS5, protocolo pre-búsqueda, manejo de colores ambiguos |
+| **Output Format** | Lista conversacional de productos ("Mirá lo que te separé") + pregunta de cierre suave |
+| **Edge Cases** | Off-topic (responder breve), usuario indeciso (sugerir populares), sin stock (alternativa), frustrado (calmar) |
+| **Domain Knowledge** | Contexto mayorista, tipos/talles/colores válidos, mapeo de términos (buzo->sudadera) |
+| **Search Strategy** | Mapeo de términos obligatorio, Gym=Deportivo, manejo de colores ambiguos en query |
 
 > 📄 Ver implementación completa en [`prompts/system-prompt.md`](../prompts/system-prompt.md)
 
@@ -286,7 +294,7 @@ Handle these situations:
 
 | Regla | Descripción |
 |:------|:------------|
-| **Lenguaje** | Argentino, voseo moderado, nunca menciona "carrito" |
+| **Lenguaje** | Argentino ESTRICTO (Buzo, Campera, Remera, Talle). NUNCA "Sudadera" o "Filtrar". |
 | **Límite de opciones** | Máximo 3 productos por búsqueda |
 | **Sin datos inventados** | Todo debe venir del MCP |
 | **Off-topic** | Responde brevemente sin romper el rol |

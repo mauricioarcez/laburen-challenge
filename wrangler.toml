@@ -13,6 +13,6 @@ tag = "v1"
 new_sqlite_classes = ["LaburenMCP"]
 
 [[d1_databases]]
-binding = "DB"
+binding = "laburen_db"
 database_name = "laburen-db"
-database_id = "to-be-replaced-with-real-id"
+database_id = "a5e9302b-7d02-48de-a817-2ce86b422663"
