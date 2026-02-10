@@ -56,7 +56,7 @@ export class D1ProductRepository implements IProductRepository {
             : "";
 
         // Use FTS5 join and BM25 ranking when searching, otherwise simple query
-        const query = usesFts
+        const queryStr = usesFts
             ? `
                 SELECT p.* FROM products p
                 JOIN products_fts ON p.rowid = products_fts.rowid
@@ -70,11 +70,18 @@ export class D1ProductRepository implements IProductRepository {
                 LIMIT 10
             `;
 
-        const stmt = this.db.d1.prepare(query);
+        console.log("--- D1ProductRepository Search Debug ---");
+        console.log("Filters:", JSON.stringify(filters));
+        console.log("SQL Query:", queryStr);
+        console.log("Params:", JSON.stringify(params));
+        console.log("----------------------------------------");
+
+        const stmt = this.db.d1.prepare(queryStr);
         const boundStmt = params.length > 0 ? stmt.bind(...params) : stmt;
 
         // @ts-ignore: D1 types
         const { results } = await boundStmt.all();
+        console.log(`Found ${results.length} products.`);
         return results as unknown as Product[];
     }
 
